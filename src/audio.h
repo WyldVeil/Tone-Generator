@@ -18,13 +18,15 @@ void audio_shutdown(AudioState* st);
 /* Thread-safe. Pushes new live parameters; takes effect on next buffer boundary. */
 void audio_set_params(AudioState* st, AudioParams params);
 
-/* Begins fade-in if not already playing. */
+/* Thread-safe. Begins fade-in if not already playing. */
 void audio_play(AudioState* st);
 
-/* Begins fade-out; when silent, resets the device. */
+/* Thread-safe. Begins fade-out; when silent, the device resets itself. */
 void audio_stop(AudioState* st);
 
-/* Returns 1 if currently producing sound (including during fade ramps), 0 otherwise. */
-int  audio_is_playing(AudioState* st);
+/* Lock-free read; safe to poll from the GUI thread.
+ * Returns 1 if currently producing sound (including during fade ramps), 0 otherwise.
+ * Result may lag by up to one buffer (~20 ms). */
+int  audio_is_playing(const AudioState* st);
 
 #endif
