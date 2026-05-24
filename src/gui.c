@@ -110,9 +110,9 @@ static void on_preset_changed(GuiState* gs) {
     if (sel >= count) return;
     double hz = list[sel].hz;
     if (gs->binaural) {
-        gs->base_hz = hz;
+        gs->beat_hz = hz;
         char b[32]; snprintf(b, sizeof b, "%.3f", hz);
-        SetWindowTextA(gs->hBaseEdit, b);
+        SetWindowTextA(gs->hBeatEdit, b);
         if (!gs->advanced) { recompute_lr_from_base_beat(gs); update_lr_display(gs); }
     } else {
         gs->custom_hz = hz;
