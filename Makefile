@@ -6,8 +6,6 @@ LIBS    := -lwinmm -lgdi32 -luser32 -lcomctl32
 SRC := src/main.c src/audio.c src/synth.c src/gui.c src/presets.c
 OUT := ToneGen.exe
 
-TEST_LDFLAGS :=
-TEST_LIBS    := -lwinmm
 TESTS := test_synth.exe test_presets.exe
 
 $(OUT): $(SRC)
@@ -24,6 +22,6 @@ test: $(TESTS)
 	./test_presets.exe
 
 clean:
-	-del /Q $(OUT) test_synth.exe test_presets.exe 2>nul
+	rm -f $(OUT) test_synth.exe test_presets.exe
 
 .PHONY: test clean
