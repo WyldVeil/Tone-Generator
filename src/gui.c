@@ -237,7 +237,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     gs->hwnd = CreateWindowA(WIN_CLASS, "Tone Generator", style,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 360,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 390,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
     /* USERDATA is also installed inside WM_NCCREATE for any messages
