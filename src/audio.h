@@ -27,8 +27,8 @@ void audio_play(AudioState* st);
 void audio_stop(AudioState* st);
 
 /* Lock-free read; safe to poll from the GUI thread.
- * Returns 1 if currently producing sound (including during fade ramps), 0 otherwise.
- * Result may lag by up to one buffer (~20 ms). */
+ * Returns 1 between audio_play() and audio_stop() (user intent), 0 otherwise.
+ * The actual fade-out continues briefly after this flips back to 0. */
 int  audio_is_playing(const AudioState* st);
 
 #endif

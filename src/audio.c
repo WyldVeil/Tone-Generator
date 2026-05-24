@@ -56,11 +56,6 @@ static void CALLBACK wave_callback(HWAVEOUT hwo, UINT msg,
     st->current_gain = synth_fill_buffer((int16_t*)hdr->lpData,
                                          BUFFER_FRAMES, &st->phase, fp);
 
-    /* If we've faded to silence and were stopping, mark not-playing. */
-    if (st->current_gain == 0.0 && target == 0.0) {
-        st->playing = 0;
-    }
-
     waveOutWrite(hwo, hdr, sizeof *hdr);
 }
 
@@ -135,9 +130,11 @@ void audio_stop(AudioState* st) {
     if (!st) return;
     EnterCriticalSection(&st->cs);
     st->target_gain = 0.0;
+    /* Clear playing immediately so the GUI status reflects user intent.
+     * The callback finishes the ~10ms fade-out and then idles on silent
+     * buffers; the device stays open. */
+    st->playing = 0;
     LeaveCriticalSection(&st->cs);
-    /* Don't reset the device here — let the callback finish the fade-out.
-     * When current_gain reaches 0, callback clears st->playing. */
 }
 
 int audio_is_playing(const AudioState* st) {
