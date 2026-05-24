@@ -7,6 +7,7 @@ typedef struct {
     double left_hz;   /* 0 means silent on the left channel */
     double right_hz;  /* equals left_hz in mono mode */
     double volume;    /* 0.0 .. 1.0 */
+    double mod_hz;    /* 0 = no modulation; >0 = AM pulse rate (e.g. 40 for GENUS) */
 } AudioParams;
 
 /* Opens waveOut, allocates buffers, starts the callback. Returns NULL on failure. */

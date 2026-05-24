@@ -315,3 +315,98 @@ from most widely cited to least. Frequencies marked with * are below
 
 55   888.000   "Angel number" frequency -- popular in numerology-based
                sound healing; associated with abundance
+
+
+40 HZ BRAIN CLEANER
+-------------------
+
+The "40Hz Brain Cleaner" button at the bottom of the program is a
+dedicated mode that replicates the auditory stimulation protocol used
+in MIT's GENUS (Gamma ENtrainment Using Sensory stimuli) research.
+
+When you click Start, the program plays a precise sequence of 1 ms tone
+pips at a 10 kHz carrier frequency, repeating at exactly 40 Hz (once
+every 25 ms). This matches the protocol described in:
+
+  Martorell AJ, Paulson AL, Suk HJ, et al. (2019). "Multi-sensory
+  Gamma Stimulation Ameliorates Alzheimer's-Associated Pathology and
+  Improves Cognition." Cell, 177(2), 256-271.
+  https://doi.org/10.1016/j.cell.2019.02.014
+
+All other controls are disabled while the Brain Cleaner is running.
+Only the volume slider remains active. Click Stop to return to normal
+operation.
+
+
+WHAT THE RESEARCH SAYS
+----------------------
+
+The work originates from Li-Huei Tsai's lab at MIT's Picower Institute
+for Learning and Memory. Key findings:
+
+  1. Iaccarino HF, Singer AC, Martorell AJ, et al. (2016). "Gamma
+     frequency entrainment attenuates amyloid load and modifies
+     microglia." Nature, 540(7632), 230-235.
+     https://doi.org/10.1038/nature20587
+
+     The original breakthrough. Exposing mice to 40 Hz light flicker
+     reduced amyloid-beta plaques (a hallmark of Alzheimer's disease)
+     in the visual cortex by roughly 50%. The stimulation triggered
+     microglia (the brain's immune cells) to become more active in
+     clearing the toxic protein buildup.
+
+  2. Martorell AJ, et al. (2019). Cell, 177(2), 256-271.
+     (cited above)
+
+     Extended the approach to auditory and combined audio-visual
+     stimulation. 40 Hz sound alone reduced amyloid plaques not just
+     in sensory regions but also in the hippocampus and prefrontal
+     cortex -- areas critical for memory. Mice showed improved
+     performance on memory tasks.
+
+  3. Chan D, Suk HJ, Jackson BL, et al. (2022). "Induction of specific
+     brain oscillations may restore neural circuits and be used for the
+     treatment of Alzheimer's disease." Journal of Internal Medicine,
+     290(5), 993-1009.
+     https://doi.org/10.1111/joim.13329
+
+     Early human clinical trial data. Participants with mild
+     Alzheimer's who received daily 40 Hz audio-visual stimulation
+     showed reduced brain atrophy and improved functional connectivity
+     compared to controls.
+
+  4. He Q, Colon-Motas KM, et al. (2021). "A feasibility trial of
+     gamma sensory flicker for patients with prodromal Alzheimer's
+     disease." Alzheimer's & Dementia: Translational Research & Clinical
+     Interventions, 7(1), e12178.
+     https://doi.org/10.1002/trc2.12178
+
+     Confirmed safety and tolerability of 40 Hz stimulation in human
+     patients over extended periods.
+
+HOW IT WORKS IN THE BRAIN
+
+Gamma oscillations (30-100 Hz, centred around 40 Hz) are natural brain
+rhythms associated with attention, perception, and memory. In
+Alzheimer's disease, these oscillations are disrupted.
+
+The 40 Hz auditory stimulation drives an Auditory Steady-State Response
+(ASSR) -- the brain's auditory cortex locks onto the 40 Hz repetition
+rate, producing strong gamma-frequency neural activity. This entrained
+gamma activity appears to:
+
+  - Activate microglia to clear amyloid-beta plaques and tau tangles
+  - Improve cerebral blood flow and vascular function
+  - Reduce neuroinflammation
+  - Strengthen synaptic connections
+  - Improve memory consolidation during sleep
+
+The research is still ongoing. Cognito Therapeutics, an MIT spinoff,
+is conducting FDA-approved clinical trials with a dedicated device.
+This program replicates the auditory component of their protocol as
+closely as possible using standard PC audio hardware.
+
+IMPORTANT: This program is not a medical device and is not FDA-approved
+for the treatment of any condition. The research is promising but still
+in clinical trial stages. Consult a healthcare professional before using
+this as part of any health regimen.

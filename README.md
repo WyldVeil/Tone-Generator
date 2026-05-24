@@ -199,6 +199,37 @@ Frequencies marked with **\*** are below 20 Hz and should be used as binaural be
 
 ---
 
+## 40Hz Brain Cleaner
+
+The **40Hz Brain Cleaner** is a dedicated mode at the bottom of the app that replicates the auditory stimulation protocol from MIT's GENUS research (Gamma ENtrainment Using Sensory stimuli). Click **Start** and it takes over -- all other controls are disabled, and the program plays precisely timed **1 ms tone pips at 10 kHz, repeating at exactly 40 Hz**, matching the protocol described in the peer-reviewed literature below.
+
+### What happens in the brain
+
+Gamma oscillations (~40 Hz) are natural brain rhythms tied to attention, perception, and memory. In Alzheimer's disease, these oscillations are disrupted. The 40 Hz auditory stimulus drives an **Auditory Steady-State Response (ASSR)** -- the brain's auditory cortex locks onto the 40 Hz repetition rate, producing strong gamma-frequency neural activity. This entrained gamma activity has been shown in research to:
+
+- Activate **microglia** (the brain's immune cells) to clear amyloid-beta plaques and tau tangles
+- Improve **cerebral blood flow** and vascular function
+- Reduce **neuroinflammation**
+- Strengthen **synaptic connections**
+- Improve **memory consolidation**
+
+### The research
+
+The work comes from **Li-Huei Tsai's lab** at MIT's Picower Institute for Learning and Memory. It is among the most promising non-pharmaceutical approaches to Alzheimer's disease currently under investigation.
+
+| Year | Paper | Key Finding |
+|------|-------|-------------|
+| 2016 | Iaccarino et al., *Nature* 540(7632), 230-235. [doi:10.1038/nature20587](https://doi.org/10.1038/nature20587) | **The original breakthrough.** 40 Hz light flicker reduced amyloid-beta plaques in mouse visual cortex by ~50% and activated microglia to clear toxic protein buildup. |
+| 2019 | Martorell et al., *Cell* 177(2), 256-271. [doi:10.1016/j.cell.2019.02.014](https://doi.org/10.1016/j.cell.2019.02.014) | Extended to **auditory stimulation** (the protocol this app replicates). 40 Hz sound reduced plaques in the hippocampus and prefrontal cortex. Mice showed improved memory task performance. |
+| 2021 | He et al., *Alzheimer's & Dementia: TRCI* 7(1), e12178. [doi:10.1002/trc2.12178](https://doi.org/10.1002/trc2.12178) | Confirmed **safety and tolerability** of 40 Hz stimulation in human patients over extended periods. |
+| 2022 | Chan et al., *Journal of Internal Medicine* 290(5), 993-1009. [doi:10.1111/joim.13329](https://doi.org/10.1111/joim.13329) | **Early human clinical data.** Patients with mild Alzheimer's receiving daily 40 Hz audio-visual stimulation showed reduced brain atrophy and improved functional connectivity vs. controls. |
+
+[Cognito Therapeutics](https://www.cognitotx.com/), an MIT spinoff, is conducting ongoing FDA-approved clinical trials with a dedicated device. This program replicates the auditory component of their protocol as closely as possible using standard PC audio hardware.
+
+> **Disclaimer:** This program is not a medical device and is not FDA-approved for the treatment of any condition. The research is promising but still in clinical trial stages. Consult a healthcare professional before using this as part of any health regimen.
+
+---
+
 ## Technical Details
 
 - **Language:** C99

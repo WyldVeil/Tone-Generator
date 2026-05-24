@@ -28,16 +28,16 @@ static void test_next_gain_at_target_returns_target(void) {
 
 static void test_fill_buffer_zero_freq_is_silent(void) {
     int16_t buf[200] = {0};
-    SynthPhase phase = {0, 0};
-    SynthFrameParams p = { 0.0, 0.0, 1.0, 1.0, 1.0, 0.0 };
+    SynthPhase phase = {0};
+    SynthFrameParams p = { 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0 };
     synth_fill_buffer(buf, 100, &phase, p);
     for (int i = 0; i < 200; i++) assert(buf[i] == 0);
 }
 
 static void test_fill_buffer_440hz_produces_nonzero(void) {
     int16_t buf[200] = {0};
-    SynthPhase phase = {0, 0};
-    SynthFrameParams p = { 440.0, 440.0, 1.0, 1.0, 1.0, 0.0 };
+    SynthPhase phase = {0};
+    SynthFrameParams p = { 440.0, 440.0, 1.0, 1.0, 1.0, 0.0, 0.0 };
     synth_fill_buffer(buf, 100, &phase, p);
     int nonzero = 0;
     for (int i = 0; i < 200; i++) if (buf[i] != 0) nonzero++;
@@ -46,8 +46,8 @@ static void test_fill_buffer_440hz_produces_nonzero(void) {
 
 static void test_fill_buffer_advances_phase(void) {
     int16_t buf[200];
-    SynthPhase phase = {0, 0};
-    SynthFrameParams p = { 1000.0, 1000.0, 1.0, 1.0, 1.0, 0.0 };
+    SynthPhase phase = {0};
+    SynthFrameParams p = { 1000.0, 1000.0, 1.0, 1.0, 1.0, 0.0, 0.0 };
     synth_fill_buffer(buf, 100, &phase, p);
     /* After 100 frames at 1000 Hz / 44100 Hz: phase_l should equal
      * (2π · 1000 / 44100) · 100, wrapped to [0, 2π). */
@@ -58,9 +58,9 @@ static void test_fill_buffer_advances_phase(void) {
 
 static void test_fill_buffer_applies_volume(void) {
     int16_t loud[200], quiet[200];
-    SynthPhase pl = {0, 0}, pq = {0, 0};
-    SynthFrameParams pa_loud  = { 440.0, 440.0, 1.0, 1.0, 1.0, 0.0 };
-    SynthFrameParams pa_quiet = { 440.0, 440.0, 0.1, 1.0, 1.0, 0.0 };
+    SynthPhase pl = {0}, pq = {0};
+    SynthFrameParams pa_loud  = { 440.0, 440.0, 1.0, 1.0, 1.0, 0.0, 0.0 };
+    SynthFrameParams pa_quiet = { 440.0, 440.0, 0.1, 1.0, 1.0, 0.0, 0.0 };
     synth_fill_buffer(loud,  100, &pl, pa_loud);
     synth_fill_buffer(quiet, 100, &pq, pa_quiet);
     /* peak of quiet buffer should be roughly 1/10 the peak of loud buffer */
@@ -75,9 +75,9 @@ static void test_fill_buffer_applies_volume(void) {
 
 static void test_fill_buffer_ramps_gain(void) {
     int16_t buf[200];
-    SynthPhase phase = {0, 0};
+    SynthPhase phase = {0};
     /* Fade from gain 0 → 1 over 100 frames, step = 0.01 */
-    SynthFrameParams p = { 440.0, 440.0, 1.0, 0.0, 1.0, 0.01 };
+    SynthFrameParams p = { 440.0, 440.0, 1.0, 0.0, 1.0, 0.01, 0.0 };
     double final_gain = synth_fill_buffer(buf, 100, &phase, p);
     assert(fabs(final_gain - 1.0) < 1e-9);
     /* First sample should be ≈ 0 (gain ≈ 0), later samples larger */

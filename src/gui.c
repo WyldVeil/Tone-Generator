@@ -18,6 +18,8 @@
 #define ID_VOLUME_TRACK   1010
 #define ID_PLAY_BUTTON    1011
 #define ID_STOP_BUTTON    1012
+#define ID_BRAIN_START    1013
+#define ID_BRAIN_STOP     1014
 
 #define WIN_CLASS         "ToneGenMain"
 
@@ -35,6 +37,7 @@ struct GuiState {
     HWND hVolumeTrack, hVolumeLabel;
     HWND hPlayBtn, hStopBtn;
     HWND hStatusLabel;
+    HWND hBrainStartBtn, hBrainStopBtn;
 
     double custom_hz;
     double base_hz, beat_hz;
@@ -42,6 +45,7 @@ struct GuiState {
     int    binaural;     /* 0 = single, 1 = binaural */
     int    advanced;     /* 0 = base+beat, 1 = L/R direct */
     int    volume_pct;   /* 0..100 */
+    int    brain_cleaner;
 };
 
 static LRESULT CALLBACK wnd_proc(HWND, UINT, WPARAM, LPARAM);
@@ -58,20 +62,29 @@ static void update_lr_display(GuiState* gs) {
 }
 
 static void apply_enabled_states(GuiState* gs) {
-    /* Custom edit is active only in single mode */
-    EnableWindow(gs->hCustomEdit, !gs->binaural);
-    /* Mode group's children active only in binaural */
-    EnableWindow(gs->hBaseEdit,  gs->binaural && !gs->advanced);
-    EnableWindow(gs->hBeatEdit,  gs->binaural && !gs->advanced);
-    EnableWindow(gs->hLeftEdit,  gs->binaural &&  gs->advanced);
-    EnableWindow(gs->hRightEdit, gs->binaural &&  gs->advanced);
-    EnableWindow(gs->hAdvCheck,  gs->binaural);
+    int bc = gs->brain_cleaner;
+    EnableWindow(gs->hPresetCombo, !bc);
+    EnableWindow(gs->hCustomEdit,  !bc && !gs->binaural);
+    EnableWindow(gs->hModeSingle,  !bc);
+    EnableWindow(gs->hModeBinaural,!bc);
+    EnableWindow(gs->hBaseEdit,    !bc && gs->binaural && !gs->advanced);
+    EnableWindow(gs->hBeatEdit,    !bc && gs->binaural && !gs->advanced);
+    EnableWindow(gs->hLeftEdit,    !bc && gs->binaural &&  gs->advanced);
+    EnableWindow(gs->hRightEdit,   !bc && gs->binaural &&  gs->advanced);
+    EnableWindow(gs->hAdvCheck,    !bc && gs->binaural);
+    EnableWindow(gs->hPlayBtn,     !bc);
+    EnableWindow(gs->hStopBtn,     !bc);
+    if (gs->hBrainStartBtn) EnableWindow(gs->hBrainStartBtn, !bc);
+    if (gs->hBrainStopBtn)  EnableWindow(gs->hBrainStopBtn,   bc);
 }
 
 static void update_status(GuiState* gs) {
     const char* base = audio_is_playing(gs->audio) ? "Playing" : "Idle";
     char msg[128];
-    if (!gs->binaural && (gs->custom_hz < 20.0 || gs->custom_hz > 20000.0)) {
+    if (gs->brain_cleaner) {
+        snprintf(msg, sizeof msg,
+                 "Status: %s  (40 Hz Brain Cleaner active)", base);
+    } else if (!gs->binaural && (gs->custom_hz < 20.0 || gs->custom_hz > 20000.0)) {
         snprintf(msg, sizeof msg,
                  "Status: %s  (note: %.2f Hz is outside audible range)",
                  base, gs->custom_hz);
@@ -83,11 +96,17 @@ static void update_status(GuiState* gs) {
 
 static void push_params(GuiState* gs) {
     AudioParams p;
-    if (gs->binaural) {
+    if (gs->brain_cleaner) {
+        p.left_hz  = 10000.0;
+        p.right_hz = 10000.0;
+        p.mod_hz   = 40.0;
+    } else if (gs->binaural) {
         p.left_hz  = gs->left_hz;
         p.right_hz = gs->right_hz;
+        p.mod_hz   = 0.0;
     } else {
         p.left_hz = p.right_hz = gs->custom_hz;
+        p.mod_hz  = 0.0;
     }
     p.volume = (double)gs->volume_pct / 100.0;
     audio_set_params(gs->audio, p);
@@ -237,7 +256,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     gs->hwnd = CreateWindowA(WIN_CLASS, "Tone Generator", style,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 390,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 460,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
     /* USERDATA is also installed inside WM_NCCREATE for any messages
@@ -343,6 +362,20 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
                   WS_CHILD | WS_VISIBLE,
                   25, 318, 360, 18, gs->hwnd, NULL, inst, NULL);
 
+    /* 40Hz Brain Cleaner group */
+    CreateWindowA("BUTTON", "40Hz Brain Cleaner",
+                  WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+                  10, 345, 380, 65, gs->hwnd, NULL, inst, NULL);
+
+    gs->hBrainStartBtn = CreateWindowA("BUTTON", "Start",
+                  WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                  80, 370, 90, 26, gs->hwnd,
+                  (HMENU)(LONG_PTR)ID_BRAIN_START, inst, NULL);
+    gs->hBrainStopBtn = CreateWindowA("BUTTON", "Stop",
+                  WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                  185, 370, 90, 26, gs->hwnd,
+                  (HMENU)(LONG_PTR)ID_BRAIN_STOP, inst, NULL);
+
     apply_enabled_states(gs);
 
     populate_presets(gs);
@@ -398,6 +431,19 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 case ID_STOP_BUTTON:    if (code == BN_CLICKED) {
                     audio_stop(gs->audio);
                     update_status(gs);
+                } break;
+                case ID_BRAIN_START:    if (code == BN_CLICKED) {
+                    gs->brain_cleaner = 1;
+                    apply_enabled_states(gs);
+                    push_params(gs);
+                    audio_play(gs->audio);
+                    update_status(gs);
+                } break;
+                case ID_BRAIN_STOP:     if (code == BN_CLICKED) {
+                    gs->brain_cleaner = 0;
+                    audio_stop(gs->audio);
+                    apply_enabled_states(gs);
+                    push_params(gs);
                 } break;
             }
             return 0;

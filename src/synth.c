@@ -28,13 +28,31 @@ double synth_fill_buffer(int16_t* out, size_t frames,
     int silent_l = (p.left_hz  == 0.0);
     int silent_r = (p.right_hz == 0.0);
 
+    /* Modulation: 40 Hz pip train (Martorell et al. 2019).
+     * Each mod cycle = 1/mod_hz seconds. The pip occupies the first 1 ms
+     * of each cycle; the remainder is silence. */
+    double inc_mod = (p.mod_hz > 0.0)
+                   ? TWO_PI * p.mod_hz / (double)SYNTH_SAMPLE_RATE
+                   : 0.0;
+    double pip_end = TWO_PI * (0.001 * p.mod_hz);   /* 1 ms as fraction of cycle */
+
     double pl = phase->phase_l;
     double pr = phase->phase_r;
+    double pm = phase->phase_mod;
     double gain = p.gain_start;
 
     for (size_t i = 0; i < frames; i++) {
         double sl = silent_l ? 0.0 : sin(pl) * p.volume * gain;
         double sr = silent_r ? 0.0 : sin(pr) * p.volume * gain;
+
+        if (p.mod_hz > 0.0) {
+            double env = (pm < pip_end) ? 1.0 : 0.0;
+            sl *= env;
+            sr *= env;
+            pm += inc_mod;
+            while (pm >= TWO_PI) pm -= TWO_PI;
+        }
+
         out[2*i]     = (int16_t)(sl * 32767.0);
         out[2*i + 1] = (int16_t)(sr * 32767.0);
 
@@ -48,5 +66,6 @@ double synth_fill_buffer(int16_t* out, size_t frames,
 
     phase->phase_l = pl;
     phase->phase_r = pr;
+    phase->phase_mod = pm;
     return gain;
 }

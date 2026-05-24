@@ -51,6 +51,7 @@ static void CALLBACK wave_callback(HWAVEOUT hwo, UINT msg,
         .gain_start  = st->current_gain,
         .gain_target = target,
         .gain_step   = FADE_STEP,
+        .mod_hz      = snap.mod_hz,
     };
 
     st->current_gain = synth_fill_buffer((int16_t*)hdr->lpData,

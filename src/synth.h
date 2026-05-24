@@ -16,6 +16,7 @@ double synth_next_gain(double current, double target, double step);
 typedef struct {
     double phase_l;
     double phase_r;
+    double phase_mod;
 } SynthPhase;
 
 /* Parameters needed to render one buffer of audio.
@@ -29,6 +30,7 @@ typedef struct {
     double gain_start;
     double gain_target;
     double gain_step;
+    double mod_hz;
 } SynthFrameParams;
 
 /* Fills `out` with `frames` stereo (L,R) interleaved int16 samples.
