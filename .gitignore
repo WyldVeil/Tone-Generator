@@ -2,3 +2,4 @@ ToneGen.exe
 test_*.exe
 *.o
 *.obj
+nul
