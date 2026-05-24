@@ -224,6 +224,9 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
     gs->advanced   = 0;
     gs->volume_pct = 50;
 
+    INITCOMMONCONTROLSEX icc = { sizeof icc, ICC_BAR_CLASSES | ICC_STANDARD_CLASSES };
+    InitCommonControlsEx(&icc);
+
     WNDCLASSA wc = {0};
     wc.lpfnWndProc   = wnd_proc;
     wc.hInstance     = inst;
@@ -317,8 +320,6 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     CreateWindowA("STATIC", "Volume:", WS_CHILD | WS_VISIBLE,
                   25, 258, 50, 18, gs->hwnd, NULL, inst, NULL);
-    INITCOMMONCONTROLSEX icc = { sizeof icc, ICC_BAR_CLASSES };
-    InitCommonControlsEx(&icc);
     gs->hVolumeTrack = CreateWindowA(TRACKBAR_CLASSA, NULL,
                   WS_CHILD | WS_VISIBLE | TBS_HORZ | TBS_NOTICKS,
                   80, 255, 220, 24, gs->hwnd,
