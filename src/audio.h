@@ -21,7 +21,9 @@ void audio_set_params(AudioState* st, AudioParams params);
 /* Thread-safe. Begins fade-in if not already playing. */
 void audio_play(AudioState* st);
 
-/* Thread-safe. Begins fade-out; when silent, the device resets itself. */
+/* Thread-safe. Begins fade-out. After the ramp, the audio thread keeps the
+ * device open (queuing silent buffers) so the next audio_play has no startup
+ * latency; only audio_shutdown closes the device. */
 void audio_stop(AudioState* st);
 
 /* Lock-free read; safe to poll from the GUI thread.
