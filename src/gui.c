@@ -53,15 +53,20 @@ static void on_preset_changed(GuiState* gs) {
 static void on_custom_committed(GuiState* gs) {
     char buf[32] = {0};
     GetWindowTextA(gs->hCustomEdit, buf, sizeof buf);
-    double v = atof(buf);
-    if (v < 0.001) v = 0.001;
-    if (v > 22050.0) v = 22050.0;
+    char* end = NULL;
+    double v = strtod(buf, &end);
+    int valid = (end != buf) && (v >= 0.001) && (v <= 22050.0);
+    if (!valid) {
+        /* Revert display to last good value; don't push to audio. */
+        char fixed[32];
+        snprintf(fixed, sizeof fixed, "%.3f", gs->custom_hz);
+        SetWindowTextA(gs->hCustomEdit, fixed);
+        return;
+    }
     gs->custom_hz = v;
-    /* re-display the clamped value */
     char fixed[32];
     snprintf(fixed, sizeof fixed, "%.3f", v);
     SetWindowTextA(gs->hCustomEdit, fixed);
-    /* Drop preset selection since user typed a custom value */
     SendMessageA(gs->hPresetCombo, CB_SETCURSEL, (WPARAM)-1, 0);
     push_params(gs);
 }
@@ -86,6 +91,9 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
                              CW_USEDEFAULT, CW_USEDEFAULT, 416, 360,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
+    /* USERDATA is also installed inside WM_NCCREATE for any messages
+     * that fire synchronously during CreateWindowA; redundant here is
+     * cheap and keeps the post-return state explicit. */
     SetWindowLongPtrA(gs->hwnd, GWLP_USERDATA, (LONG_PTR)gs);
 
     /* Frequency group box at top */
@@ -132,6 +140,11 @@ void gui_destroy(GuiState* gs) {
 }
 
 static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+    if (msg == WM_NCCREATE) {
+        CREATESTRUCT* cs = (CREATESTRUCT*)lp;
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
+        return DefWindowProcA(hwnd, msg, wp, lp);
+    }
     GuiState* gs = (GuiState*)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     switch (msg) {
         case WM_COMMAND: {
