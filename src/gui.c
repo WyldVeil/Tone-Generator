@@ -20,6 +20,8 @@
 #define ID_STOP_BUTTON    1012
 #define ID_BRAIN_START    1013
 #define ID_BRAIN_STOP     1014
+#define ID_BRAIN_TIMER    2001
+#define BRAIN_SESSION_SEC 3600
 
 #define WIN_CLASS         "ToneGenMain"
 
@@ -38,6 +40,7 @@ struct GuiState {
     HWND hPlayBtn, hStopBtn;
     HWND hStatusLabel;
     HWND hBrainStartBtn, hBrainStopBtn;
+    HWND hBrainTimerLabel;
 
     double custom_hz;
     double base_hz, beat_hz;
@@ -46,6 +49,7 @@ struct GuiState {
     int    advanced;     /* 0 = base+beat, 1 = L/R direct */
     int    volume_pct;   /* 0..100 */
     int    brain_cleaner;
+    int    brain_seconds_left;
 };
 
 static LRESULT CALLBACK wnd_proc(HWND, UINT, WPARAM, LPARAM);
@@ -82,8 +86,10 @@ static void update_status(GuiState* gs) {
     const char* base = audio_is_playing(gs->audio) ? "Playing" : "Idle";
     char msg[128];
     if (gs->brain_cleaner) {
+        int m = gs->brain_seconds_left / 60;
+        int s = gs->brain_seconds_left % 60;
         snprintf(msg, sizeof msg,
-                 "Status: %s  (40 Hz Brain Cleaner active)", base);
+                 "Status: %s  (40 Hz Brain Cleaner - %d:%02d left)", base, m, s);
     } else if (!gs->binaural && (gs->custom_hz < 20.0 || gs->custom_hz > 20000.0)) {
         snprintf(msg, sizeof msg,
                  "Status: %s  (note: %.2f Hz is outside audible range)",
@@ -256,7 +262,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     gs->hwnd = CreateWindowA(WIN_CLASS, "Tone Generator", style,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 460,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 480,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
     /* USERDATA is also installed inside WM_NCCREATE for any messages
@@ -365,16 +371,19 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
     /* 40Hz Brain Cleaner group */
     CreateWindowA("BUTTON", "40Hz Brain Cleaner",
                   WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 345, 380, 65, gs->hwnd, NULL, inst, NULL);
+                  10, 345, 380, 85, gs->hwnd, NULL, inst, NULL);
 
-    gs->hBrainStartBtn = CreateWindowA("BUTTON", "Start",
+    gs->hBrainStartBtn = CreateWindowA("BUTTON", "Start (60 min)",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  80, 370, 90, 26, gs->hwnd,
+                  80, 368, 110, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_START, inst, NULL);
     gs->hBrainStopBtn = CreateWindowA("BUTTON", "Stop",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  185, 370, 90, 26, gs->hwnd,
+                  205, 368, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_STOP, inst, NULL);
+    gs->hBrainTimerLabel = CreateWindowA("STATIC", "60:00 session (MIT GENUS protocol)",
+                  WS_CHILD | WS_VISIBLE,
+                  25, 402, 350, 18, gs->hwnd, NULL, inst, NULL);
 
     apply_enabled_states(gs);
 
@@ -434,12 +443,15 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 } break;
                 case ID_BRAIN_START:    if (code == BN_CLICKED) {
                     gs->brain_cleaner = 1;
+                    gs->brain_seconds_left = BRAIN_SESSION_SEC;
                     apply_enabled_states(gs);
                     push_params(gs);
                     audio_play(gs->audio);
+                    SetTimer(hwnd, ID_BRAIN_TIMER, 1000, NULL);
                     update_status(gs);
                 } break;
                 case ID_BRAIN_STOP:     if (code == BN_CLICKED) {
+                    KillTimer(hwnd, ID_BRAIN_TIMER);
                     gs->brain_cleaner = 0;
                     audio_stop(gs->audio);
                     apply_enabled_states(gs);
@@ -450,6 +462,25 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         case WM_HSCROLL: {
             if (gs && (HWND)lp == gs->hVolumeTrack) on_volume_changed(gs);
+            return 0;
+        }
+        case WM_TIMER: {
+            if (!gs || wp != ID_BRAIN_TIMER) break;
+            gs->brain_seconds_left--;
+            if (gs->brain_seconds_left <= 0) {
+                KillTimer(hwnd, ID_BRAIN_TIMER);
+                gs->brain_cleaner = 0;
+                audio_stop(gs->audio);
+                apply_enabled_states(gs);
+                push_params(gs);
+                SetWindowTextA(gs->hBrainTimerLabel, "Session complete");
+            } else {
+                int m = gs->brain_seconds_left / 60;
+                int s = gs->brain_seconds_left % 60;
+                char tb[32]; snprintf(tb, sizeof tb, "%d:%02d remaining", m, s);
+                SetWindowTextA(gs->hBrainTimerLabel, tb);
+            }
+            update_status(gs);
             return 0;
         }
         case WM_CLOSE:

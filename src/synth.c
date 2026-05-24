@@ -46,7 +46,15 @@ double synth_fill_buffer(int16_t* out, size_t frames,
         double sr = silent_r ? 0.0 : sin(pr) * p.volume * gain;
 
         if (p.mod_hz > 0.0) {
-            double env = (pm < pip_end) ? 1.0 : 0.0;
+            double env;
+            if (pm >= pip_end) {
+                env = 0.0;
+            } else {
+                /* Hanning window across the pip to eliminate spectral
+                 * splatter from hard on/off gating. */
+                double pip_pos = pm / pip_end;   /* 0..1 within pip */
+                env = 0.5 * (1.0 - cos(TWO_PI * pip_pos));
+            }
             sl *= env;
             sr *= env;
             pm += inc_mod;
