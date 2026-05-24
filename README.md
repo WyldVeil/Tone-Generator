@@ -2,6 +2,10 @@
 
 A lightweight Windows tone generator that produces pure sine tones from first principles. No samples, no synth libraries -- every sound you hear is computed mathematically in real time. Built in C99 with the classic Win32 look.
 
+<p align="center">
+  <img src="screenshot.JPG" alt="Tone Generator screenshot" width="400">
+</p>
+
 ---
 
 ## Getting Started
