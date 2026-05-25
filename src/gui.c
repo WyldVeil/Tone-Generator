@@ -425,8 +425,8 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     CreateWindowA("STATIC",
                   "High volume may damage hearing. Use at your own risk.",
-                  WS_CHILD | WS_VISIBLE,
-                  25, 312, 360, 14, gs->hwnd, NULL, inst, NULL);
+                  WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
+                  25, 312, 360, 18, gs->hwnd, (HMENU)(LONG_PTR)9999, inst, NULL);
 
     gs->hPlayBtn = CreateWindowA("BUTTON", "Play",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
@@ -542,6 +542,20 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 } break;
             }
             return 0;
+        }
+        case WM_DRAWITEM: {
+            if (!gs) break;
+            DRAWITEMSTRUCT* dis = (DRAWITEMSTRUCT*)lp;
+            if (dis->CtlID == 9999) {
+                SetBkMode(dis->hDC, TRANSPARENT);
+                SetTextColor(dis->hDC, RGB(200, 0, 0));
+                char txt[128] = {0};
+                GetWindowTextA(dis->hwndItem, txt, sizeof txt);
+                DrawTextA(dis->hDC, txt, -1, &dis->rcItem,
+                          DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+                return TRUE;
+            }
+            break;
         }
         case WM_HSCROLL: {
             if (gs && (HWND)lp == gs->hVolumeTrack) on_volume_changed(gs);
