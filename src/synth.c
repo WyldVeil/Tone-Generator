@@ -50,10 +50,18 @@ double synth_fill_buffer(int16_t* out, size_t frames,
             if (pm >= pip_end) {
                 env = 0.0;
             } else {
-                /* Hanning window across the pip to eliminate spectral
-                 * splatter from hard on/off gating. */
+                /* Trapezoidal envelope with short cosine ramps at edges.
+                 * Preserves the sharp onset transient the auditory cortex
+                 * needs for gamma entrainment while avoiding spectral
+                 * splatter from a completely hard cut. */
                 double pip_pos = pm / pip_end;   /* 0..1 within pip */
-                env = 0.5 * (1.0 - cos(TWO_PI * pip_pos));
+                double ramp = 0.12;              /* ~5 samples at 44.1kHz */
+                if (pip_pos < ramp)
+                    env = 0.5 * (1.0 - cos(3.14159265358979323846 * pip_pos / ramp));
+                else if (pip_pos > 1.0 - ramp)
+                    env = 0.5 * (1.0 - cos(3.14159265358979323846 * (1.0 - pip_pos) / ramp));
+                else
+                    env = 1.0;
             }
             sl *= env;
             sr *= env;
