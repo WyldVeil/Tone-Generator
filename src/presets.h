@@ -10,4 +10,12 @@ typedef struct {
  * Writes the count to *out_count. Never returns NULL. */
 const Preset* presets_list(int* out_count);
 
+typedef struct {
+    const char* name;
+    double      base_hz;
+    double      beat_hz;
+} BinauralPreset;
+
+const BinauralPreset* binaural_presets_list(int* out_count);
+
 #endif

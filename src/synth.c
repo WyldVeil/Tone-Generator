@@ -77,3 +77,77 @@ double synth_fill_buffer(int16_t* out, size_t frames,
     phase->phase_mod = pm;
     return gain;
 }
+
+static uint32_t xorshift32(uint32_t* state) {
+    uint32_t x = *state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    *state = x;
+    return x;
+}
+
+static double white_sample(NoiseChannel* ch) {
+    return (double)(int32_t)xorshift32(&ch->seed) / 2147483647.0;
+}
+
+/* Paul Kellet's 1/f approximation — widely used, accurate to +-0.5 dB */
+static double pink_sample(NoiseChannel* ch) {
+    double w = white_sample(ch);
+    ch->b0 = 0.99886 * ch->b0 + w * 0.0555179;
+    ch->b1 = 0.99332 * ch->b1 + w * 0.0750759;
+    ch->b2 = 0.96900 * ch->b2 + w * 0.1538520;
+    ch->b3 = 0.86650 * ch->b3 + w * 0.3104856;
+    ch->b4 = 0.55000 * ch->b4 + w * 0.5329522;
+    ch->b5 = -0.7616 * ch->b5 - w * 0.0168980;
+    double pink = ch->b0 + ch->b1 + ch->b2 + ch->b3
+                + ch->b4 + ch->b5 + ch->b6 + w * 0.5362;
+    ch->b6 = w * 0.115926;
+    return pink * 0.11;
+}
+
+/* Brownian / red noise — integrated white noise with DC-blocking leak */
+static double brown_sample(NoiseChannel* ch) {
+    ch->brown += white_sample(ch) * 0.02;
+    ch->brown *= 0.998;
+    return ch->brown * 3.5;
+}
+
+static double noise_one(NoiseChannel* ch, int type) {
+    switch (type) {
+        case NOISE_WHITE: return white_sample(ch);
+        case NOISE_PINK:  return pink_sample(ch);
+        case NOISE_BROWN: return brown_sample(ch);
+        default:          return 0.0;
+    }
+}
+
+void noise_state_init(NoiseState* ns) {
+    ns->left.seed  = 2463534242u;
+    ns->right.seed = 1370291435u;
+    ns->left.b0 = ns->left.b1 = ns->left.b2 = 0.0;
+    ns->left.b3 = ns->left.b4 = ns->left.b5 = ns->left.b6 = 0.0;
+    ns->left.brown = 0.0;
+    ns->right.b0 = ns->right.b1 = ns->right.b2 = 0.0;
+    ns->right.b3 = ns->right.b4 = ns->right.b5 = ns->right.b6 = 0.0;
+    ns->right.brown = 0.0;
+}
+
+double synth_fill_noise(int16_t* out, size_t frames, NoiseState* ns,
+                        int noise_type, double volume,
+                        double gain_start, double gain_target, double gain_step)
+{
+    double gain = gain_start;
+    for (size_t i = 0; i < frames; i++) {
+        double sl = noise_one(&ns->left,  noise_type) * volume * gain;
+        double sr = noise_one(&ns->right, noise_type) * volume * gain;
+        if (sl >  1.0) sl =  1.0;
+        if (sl < -1.0) sl = -1.0;
+        if (sr >  1.0) sr =  1.0;
+        if (sr < -1.0) sr = -1.0;
+        out[2*i]     = (int16_t)(sl * 32767.0);
+        out[2*i + 1] = (int16_t)(sr * 32767.0);
+        gain = synth_next_gain(gain, gain_target, gain_step);
+    }
+    return gain;
+}

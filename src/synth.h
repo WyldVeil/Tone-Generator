@@ -40,4 +40,26 @@ double synth_fill_buffer(int16_t* out, size_t frames,
                          SynthPhase* phase,
                          SynthFrameParams p);
 
+#define NOISE_NONE  0
+#define NOISE_WHITE 1
+#define NOISE_PINK  2
+#define NOISE_BROWN 3
+
+typedef struct {
+    uint32_t seed;
+    double b0, b1, b2, b3, b4, b5, b6;
+    double brown;
+} NoiseChannel;
+
+typedef struct {
+    NoiseChannel left;
+    NoiseChannel right;
+} NoiseState;
+
+void noise_state_init(NoiseState* ns);
+
+double synth_fill_noise(int16_t* out, size_t frames, NoiseState* ns,
+                        int noise_type, double volume,
+                        double gain_start, double gain_target, double gain_step);
+
 #endif

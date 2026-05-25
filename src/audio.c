@@ -18,6 +18,7 @@ struct AudioState {
     CRITICAL_SECTION cs;
     AudioParams     params;          /* live, guarded by cs */
     SynthPhase      phase;           /* owned by callback thread */
+    NoiseState      noise;           /* owned by callback thread */
     double          current_gain;    /* owned by callback thread */
     double          target_gain;     /* guarded by cs */
     int             playing;         /* 1 between play() and audio going silent */
@@ -44,18 +45,23 @@ static void CALLBACK wave_callback(HWAVEOUT hwo, UINT msg,
     target = st->target_gain;
     LeaveCriticalSection(&st->cs);
 
-    SynthFrameParams fp = {
-        .left_hz     = snap.left_hz,
-        .right_hz    = snap.right_hz,
-        .volume      = snap.volume,
-        .gain_start  = st->current_gain,
-        .gain_target = target,
-        .gain_step   = FADE_STEP,
-        .mod_hz      = snap.mod_hz,
-    };
-
-    st->current_gain = synth_fill_buffer((int16_t*)hdr->lpData,
-                                         BUFFER_FRAMES, &st->phase, fp);
+    if (snap.noise_type > 0) {
+        st->current_gain = synth_fill_noise((int16_t*)hdr->lpData,
+                               BUFFER_FRAMES, &st->noise, snap.noise_type,
+                               snap.volume, st->current_gain, target, FADE_STEP);
+    } else {
+        SynthFrameParams fp = {
+            .left_hz     = snap.left_hz,
+            .right_hz    = snap.right_hz,
+            .volume      = snap.volume,
+            .gain_start  = st->current_gain,
+            .gain_target = target,
+            .gain_step   = FADE_STEP,
+            .mod_hz      = snap.mod_hz,
+        };
+        st->current_gain = synth_fill_buffer((int16_t*)hdr->lpData,
+                                             BUFFER_FRAMES, &st->phase, fp);
+    }
 
     waveOutWrite(hwo, hdr, sizeof *hdr);
 }
@@ -65,6 +71,7 @@ AudioState* audio_init(void) {
     if (!st) return NULL;
     InitializeCriticalSection(&st->cs);
     st->params.volume = 0.5;
+    noise_state_init(&st->noise);
 
     WAVEFORMATEX fmt = {
         .wFormatTag      = WAVE_FORMAT_PCM,

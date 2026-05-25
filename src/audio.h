@@ -8,6 +8,7 @@ typedef struct {
     double right_hz;  /* equals left_hz in mono mode */
     double volume;    /* 0.0 .. 1.0 */
     double mod_hz;    /* 0 = no modulation; >0 = AM pulse rate (e.g. 40 for GENUS) */
+    int    noise_type; /* 0 = sine (normal); NOISE_WHITE/PINK/BROWN from synth.h */
 } AudioParams;
 
 /* Opens waveOut, allocates buffers, starts the callback. Returns NULL on failure. */
