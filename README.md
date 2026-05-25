@@ -16,7 +16,7 @@ A lightweight Windows tone generator that produces pure sine tones from first pr
 4. Drag the **Volume** slider to adjust loudness.
 5. Click **Stop** to fade out cleanly.
 
-> **Note:** After typing a custom frequency, you must click outside the edit field (or tab away) before clicking Play, so the new value is committed.
+> **Note:** After typing a custom frequency, press **Enter** or click outside the edit field to confirm the value.
 
 ---
 
@@ -30,7 +30,21 @@ Both ears receive the same frequency. Good for meditation drones, tuning instrum
 
 Each ear receives a slightly different frequency. Your brain perceives a rhythmic "wobble" at the difference between the two. This perceived wobble is the **binaural beat**.
 
+A **Binaural preset** dropdown provides common brainwave states (Delta 2 Hz, Theta 6 Hz, Schumann 7.83 Hz, Alpha 10 Hz, SMR 14 Hz, Beta 20 Hz, Gamma 40 Hz) plus all Solfeggio and tuning frequencies -- these automatically set the Base and Beat fields for you.
+
 > **Headphones are required** for binaural beats to work -- speakers mix the channels and cancel the effect.
+
+### Noise
+
+Generates continuous noise for focus, sleep, or masking. Three types:
+
+| Type | Spectrum | Sound |
+|------|----------|-------|
+| **White** | Flat (equal energy at all frequencies) | Classic static |
+| **Pink** | 1/f (equal energy per octave) | Balanced, natural. Good for focus and sleep |
+| **Brown** | 1/f² (deeper rolloff) | Rumbling waterfall / distant thunder. Deep relaxation, tinnitus relief |
+
+All three produce true stereo noise (independent L/R channels for a spacious, natural sound).
 
 ---
 
@@ -201,7 +215,9 @@ Frequencies marked with **\*** are below 20 Hz and should be used as binaural be
 
 ## 40Hz Brain Cleaner
 
-The **40Hz Brain Cleaner** is a dedicated mode at the bottom of the app that replicates the auditory stimulation protocol from MIT's GENUS research (Gamma ENtrainment Using Sensory stimuli). Click **Start** and it takes over -- all other controls are disabled, and the program plays precisely timed **1 ms tone pips at 10 kHz, repeating at exactly 40 Hz**, matching the protocol described in the peer-reviewed literature below.
+The **40Hz Brain Cleaner** is a dedicated mode at the bottom of the app that replicates the auditory stimulation protocol from MIT's GENUS research (Gamma ENtrainment Using Sensory stimuli). Click **Start (60 min)** and it takes over -- all other controls are disabled, and the program plays precisely timed **1 ms tone pips at 10 kHz, repeating at exactly 40 Hz**, matching the protocol described in the peer-reviewed literature below. The session runs for exactly **60 minutes** (the clinical protocol dosage) with a countdown timer, then stops automatically.
+
+> **Warning:** High volume levels may damage hearing. Start at a low volume and increase gradually. Use at your own risk.
 
 ### What happens in the brain
 
@@ -232,9 +248,9 @@ The work comes from **Li-Huei Tsai's lab** at MIT's Picower Institute for Learni
 
 ## Technical Details
 
-- **Language:** C99
+- **Language:** C (C99)
 - **Audio:** Windows Multimedia API (`waveOut`) -- 44.1 kHz, 16-bit, stereo
-- **Synthesis:** Phase-accumulator sine generation with 10 ms linear fade ramps
+- **Synthesis:** Phase-accumulator sine generation, noise generators (white/pink/brown), 40 Hz pip train with trapezoidal envelope
 - **GUI:** Pure Win32 API (no manifest -- classic gray-bevel look)
 - **Threading:** GUI thread + `waveOut` callback thread; `CRITICAL_SECTION`-guarded parameter passing
 - **Tests:** 15 unit tests (10 synth, 5 preset) via `assert.h`

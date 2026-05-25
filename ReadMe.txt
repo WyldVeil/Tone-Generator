@@ -17,14 +17,14 @@ GETTING STARTED
 4. Drag the Volume slider to adjust loudness.
 5. Click Stop to fade out cleanly.
 
-Note: after typing a custom frequency, you must click outside the edit
-field (or tab away) before clicking Play, so the new value is committed.
+Note: after typing a custom frequency, press Enter or click outside the
+edit field to confirm the value.
 
 
 MODES
 -----
 
-The program has two modes, selectable via the radio buttons:
+The program has three modes, selectable via the radio buttons:
 
   Single tone
     Both ears receive the same frequency. Good for meditation drones,
@@ -35,7 +35,25 @@ The program has two modes, selectable via the radio buttons:
     perceives a rhythmic "wobble" at the difference between the two.
     This perceived wobble is the binaural beat. Headphones are required
     for binaural beats to work -- speakers mix the channels and cancel
-    the effect.
+    the effect. A dropdown of binaural presets is available with common
+    brainwave states (Delta, Theta, Schumann, Alpha, SMR, Beta, Gamma)
+    plus all Solfeggio and tuning frequencies -- these automatically
+    set the Base and Beat fields for you.
+
+  Noise
+    Generates continuous noise for focus, sleep, or masking. Three
+    types are available from the Type dropdown:
+
+    White noise -- flat spectrum, equal energy at all frequencies.
+                   Classic static sound.
+    Pink noise  -- 1/f spectrum, equal energy per octave. Balanced
+                   and natural-sounding. Good for focus and sleep.
+    Brown noise -- 1/f^2 spectrum, deeper and rumbly. Like a
+                   waterfall or distant thunder. Popular for deep
+                   relaxation and tinnitus relief.
+
+    All three produce true stereo noise (independent left and right
+    channels for a spacious, natural sound).
 
 
 HOW BINAURAL BEATS WORK
@@ -333,9 +351,14 @@ every 25 ms). This matches the protocol described in:
   Improves Cognition." Cell, 177(2), 256-271.
   https://doi.org/10.1016/j.cell.2019.02.014
 
-All other controls are disabled while the Brain Cleaner is running.
-Only the volume slider remains active. Click Stop to return to normal
-operation.
+The session runs for exactly 60 minutes (matching the MIT clinical
+protocol dosage) and stops automatically. A countdown timer shows time
+remaining. All other controls are disabled while the Brain Cleaner is
+running. Only the volume slider remains active. Click Stop at any time
+to end the session early and return to normal operation.
+
+WARNING: High volume levels may damage hearing. Start at a low volume
+and increase gradually. Use at your own risk.
 
 
 WHAT THE RESEARCH SAYS
