@@ -300,7 +300,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     gs->hwnd = CreateWindowA(WIN_CLASS, "Tone Generator", style,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 510,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 416, 530,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
     /* USERDATA is also installed inside WM_NCCREATE for any messages
@@ -409,7 +409,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     /* Output group */
     CreateWindowA("BUTTON", "Output", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 265, 380, 95, gs->hwnd, NULL, inst, NULL);
+                  10, 265, 380, 110, gs->hwnd, NULL, inst, NULL);
 
     CreateWindowA("STATIC", "Volume:", WS_CHILD | WS_VISIBLE,
                   25, 288, 50, 18, gs->hwnd, NULL, inst, NULL);
@@ -423,35 +423,40 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
                   WS_CHILD | WS_VISIBLE,
                   310, 288, 60, 18, gs->hwnd, NULL, inst, NULL);
 
+    CreateWindowA("STATIC",
+                  "High volume may damage hearing. Use at your own risk.",
+                  WS_CHILD | WS_VISIBLE,
+                  25, 312, 360, 14, gs->hwnd, NULL, inst, NULL);
+
     gs->hPlayBtn = CreateWindowA("BUTTON", "Play",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  80, 315, 90, 26, gs->hwnd,
+                  80, 333, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_PLAY_BUTTON, inst, NULL);
     gs->hStopBtn = CreateWindowA("BUTTON", "Stop",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  185, 315, 90, 26, gs->hwnd,
+                  185, 333, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_STOP_BUTTON, inst, NULL);
 
     gs->hStatusLabel = CreateWindowA("STATIC", "Status: Idle",
                   WS_CHILD | WS_VISIBLE,
-                  25, 348, 360, 18, gs->hwnd, NULL, inst, NULL);
+                  25, 366, 360, 18, gs->hwnd, NULL, inst, NULL);
 
     /* 40Hz Brain Cleaner group */
     CreateWindowA("BUTTON", "40Hz Brain Cleaner",
                   WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 375, 380, 85, gs->hwnd, NULL, inst, NULL);
+                  10, 393, 380, 85, gs->hwnd, NULL, inst, NULL);
 
     gs->hBrainStartBtn = CreateWindowA("BUTTON", "Start (60 min)",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  80, 398, 110, 26, gs->hwnd,
+                  80, 416, 110, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_START, inst, NULL);
     gs->hBrainStopBtn = CreateWindowA("BUTTON", "Stop",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  205, 398, 90, 26, gs->hwnd,
+                  205, 416, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_STOP, inst, NULL);
     gs->hBrainTimerLabel = CreateWindowA("STATIC", "60:00 session (MIT GENUS protocol)",
                   WS_CHILD | WS_VISIBLE,
-                  25, 432, 350, 18, gs->hwnd, NULL, inst, NULL);
+                  25, 450, 350, 18, gs->hwnd, NULL, inst, NULL);
 
     apply_enabled_states(gs);
 
