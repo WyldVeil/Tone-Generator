@@ -3,7 +3,7 @@
 A lightweight Windows tone generator that produces pure sine tones from first principles. No samples, no synth libraries -- every sound you hear is computed mathematically in real time. Built in C with the classic Win32 look.
 
 <p align="center">
-  <img src="screenshot.JPG" alt="Tone Generator screenshot" width="400">
+  <img src="screenshot.JPG?v=3" alt="Tone Generator screenshot" width="400">
 </p>
 
 ---
