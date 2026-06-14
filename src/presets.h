@@ -20,12 +20,4 @@ const Preset* binaural_beat_list(int* out_count);
  * or -1 if none matches. First match wins. */
 int presets_match_index(const Preset* list, int count, double hz, double tol);
 
-typedef struct {
-    const char* name;
-    double      base_hz;
-    double      beat_hz;
-} BinauralPreset;
-
-const BinauralPreset* binaural_presets_list(int* out_count);
-
 #endif
