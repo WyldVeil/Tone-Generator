@@ -30,7 +30,7 @@ Both ears receive the same frequency. Good for meditation drones, tuning instrum
 
 Each ear receives a slightly different frequency. Your brain perceives a rhythmic "wobble" at the difference between the two. This perceived wobble is the **binaural beat**.
 
-A **Binaural preset** dropdown provides common brainwave states (Delta 2 Hz, Theta 6 Hz, Schumann 7.83 Hz, Alpha 10 Hz, SMR 14 Hz, Beta 20 Hz, Gamma 40 Hz) plus all Solfeggio and tuning frequencies -- these automatically set the Base and Beat fields for you.
+Two dropdowns let you compose a session independently. The **Carrier** dropdown sets the pitch you consciously hear -- a neutral 200 Hz, the Solfeggio frequencies, or concert tunings (Middle C, A432, A440). The **Beat** dropdown sets the brainwave target your mind entrains to: Delta 2 Hz, Theta 6 Hz, Schumann 7.83 Hz, Alpha 10 Hz, SMR 14 Hz, Beta 20 Hz, Gamma 40 Hz. Each picks into the Base and Beat fields, which you can still edit by hand; a field that matches no preset shows `-- Custom --`.
 
 > **Headphones are required** for binaural beats to work -- speakers mix the channels and cancel the effect.
 

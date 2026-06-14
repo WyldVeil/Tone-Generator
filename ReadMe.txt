@@ -35,10 +35,12 @@ The program has three modes, selectable via the radio buttons:
     perceives a rhythmic "wobble" at the difference between the two.
     This perceived wobble is the binaural beat. Headphones are required
     for binaural beats to work -- speakers mix the channels and cancel
-    the effect. A dropdown of binaural presets is available with common
-    brainwave states (Delta, Theta, Schumann, Alpha, SMR, Beta, Gamma)
-    plus all Solfeggio and tuning frequencies -- these automatically
-    set the Base and Beat fields for you.
+    the effect. Two dropdowns let you compose a session: a Carrier
+    dropdown (the pitch you hear -- neutral 200 Hz, the Solfeggio
+    frequencies, or concert tunings) and a Beat dropdown (the
+    brainwave target: Delta, Theta, Schumann, Alpha, SMR, Beta,
+    Gamma). Each picks into the Base and Beat fields, which you can
+    still edit by hand.
 
   Noise
     Generates continuous noise for focus, sleep, or masking. Three
