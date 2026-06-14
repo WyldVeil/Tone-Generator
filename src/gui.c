@@ -21,7 +21,8 @@
 #define ID_STOP_BUTTON    1012
 #define ID_MODE_NOISE     1013
 #define ID_NOISE_TYPE     1014
-#define ID_BINAURAL_COMBO 1015
+#define ID_CARRIER_COMBO  1015
+#define ID_BEAT_COMBO     1018
 #define ID_BRAIN_START    1016
 #define ID_BRAIN_STOP     1017
 #define ID_BRAIN_TIMER    2001
@@ -40,7 +41,7 @@ struct GuiState {
     HWND hBaseEdit, hBeatEdit;
     HWND hAdvCheck;
     HWND hLeftEdit, hRightEdit;
-    HWND hBinauralCombo;
+    HWND hCarrierCombo, hBeatCombo;
     HWND hNoiseTypeCombo;
     HWND hVolumeTrack, hVolumeLabel;
     HWND hPlayBtn, hStopBtn;
@@ -73,6 +74,22 @@ static void update_lr_display(GuiState* gs) {
     snprintf(b, sizeof b, "%.3f", gs->right_hz); SetWindowTextA(gs->hRightEdit, b);
 }
 
+/* Select the combo entry matching `hz`. Index 0 is "-- Custom --";
+ * presets occupy indices 1..count. Falls back to "-- Custom --". */
+static void sync_combo(HWND combo, const Preset* list, int count, double hz) {
+    int idx = presets_match_index(list, count, hz, 0.01);
+    SendMessageA(combo, CB_SETCURSEL, (WPARAM)(idx < 0 ? 0 : idx + 1), 0);
+}
+
+/* Re-point both binaural combos at whatever base_hz/beat_hz currently hold.
+ * CB_SETCURSEL does not emit CBN_SELCHANGE, so this never recurses. */
+static void sync_binaural_combos(GuiState* gs) {
+    int cc = 0; const Preset* cl = binaural_carrier_list(&cc);
+    int bc = 0; const Preset* bl = binaural_beat_list(&bc);
+    sync_combo(gs->hCarrierCombo, cl, cc, gs->base_hz);
+    sync_combo(gs->hBeatCombo,    bl, bc, gs->beat_hz);
+}
+
 static void apply_enabled_states(GuiState* gs) {
     int bc = gs->brain_cleaner;
     int nm = gs->noise_mode;
@@ -82,7 +99,8 @@ static void apply_enabled_states(GuiState* gs) {
     EnableWindow(gs->hModeSingle,   !bc);
     EnableWindow(gs->hModeBinaural, !bc);
     if (gs->hModeNoise)      EnableWindow(gs->hModeNoise,      !bc);
-    if (gs->hBinauralCombo)  EnableWindow(gs->hBinauralCombo,  !bc && bn);
+    EnableWindow(gs->hCarrierCombo, !bc && !nm && bn && !gs->advanced);
+    EnableWindow(gs->hBeatCombo,    !bc && !nm && bn && !gs->advanced);
     EnableWindow(gs->hBaseEdit,     !bc && !nm && bn && !gs->advanced);
     EnableWindow(gs->hBeatEdit,     !bc && !nm && bn && !gs->advanced);
     EnableWindow(gs->hLeftEdit,     !bc && !nm && bn &&  gs->advanced);
@@ -138,6 +156,17 @@ static void populate_presets(GuiState* gs) {
     for (int i = 0; i < count; i++) {
         SendMessageA(gs->hPresetCombo, CB_ADDSTRING, 0, (LPARAM)list[i].name);
     }
+}
+
+static void populate_binaural_combos(GuiState* gs) {
+    SendMessageA(gs->hCarrierCombo, CB_ADDSTRING, 0, (LPARAM)"-- Custom --");
+    int cc = 0; const Preset* cl = binaural_carrier_list(&cc);
+    for (int i = 0; i < cc; i++)
+        SendMessageA(gs->hCarrierCombo, CB_ADDSTRING, 0, (LPARAM)cl[i].name);
+    SendMessageA(gs->hBeatCombo, CB_ADDSTRING, 0, (LPARAM)"-- Custom --");
+    int bc = 0; const Preset* bl = binaural_beat_list(&bc);
+    for (int i = 0; i < bc; i++)
+        SendMessageA(gs->hBeatCombo, CB_ADDSTRING, 0, (LPARAM)bl[i].name);
 }
 
 static void on_preset_changed(GuiState* gs) {
@@ -206,6 +235,7 @@ static void on_base_committed(GuiState* gs) {
     if (!read_clamped(gs->hBaseEdit, gs->base_hz, &v)) return;
     gs->base_hz = v;
     if (!gs->advanced) { recompute_lr_from_base_beat(gs); update_lr_display(gs); }
+    sync_binaural_combos(gs);
     push_params(gs);
 }
 static void on_beat_committed(GuiState* gs) {
@@ -213,6 +243,7 @@ static void on_beat_committed(GuiState* gs) {
     if (!read_clamped(gs->hBeatEdit, gs->beat_hz, &v)) return;
     gs->beat_hz = v;
     if (!gs->advanced) { recompute_lr_from_base_beat(gs); update_lr_display(gs); }
+    sync_binaural_combos(gs);
     push_params(gs);
 }
 static void on_left_committed(GuiState* gs) {
@@ -244,17 +275,28 @@ static void on_noise_type_changed(GuiState* gs) {
     push_params(gs);
 }
 
-static void on_binaural_preset_changed(GuiState* gs) {
-    int sel = (int)SendMessageA(gs->hBinauralCombo, CB_GETCURSEL, 0, 0);
-    if (sel < 0) return;
+static void on_carrier_preset_changed(GuiState* gs) {
+    int sel = (int)SendMessageA(gs->hCarrierCombo, CB_GETCURSEL, 0, 0);
+    if (sel <= 0) return;                 /* 0 = "-- Custom --" */
     int count = 0;
-    const BinauralPreset* list = binaural_presets_list(&count);
-    if (sel >= count) return;
-    gs->base_hz = list[sel].base_hz;
-    gs->beat_hz = list[sel].beat_hz;
-    char b[32];
-    snprintf(b, sizeof b, "%.3f", gs->base_hz); SetWindowTextA(gs->hBaseEdit, b);
-    snprintf(b, sizeof b, "%.3f", gs->beat_hz); SetWindowTextA(gs->hBeatEdit, b);
+    const Preset* list = binaural_carrier_list(&count);
+    if (sel - 1 >= count) return;
+    gs->base_hz = list[sel - 1].hz;
+    char b[32]; snprintf(b, sizeof b, "%.3f", gs->base_hz);
+    SetWindowTextA(gs->hBaseEdit, b);
+    if (!gs->advanced) { recompute_lr_from_base_beat(gs); update_lr_display(gs); }
+    push_params(gs);
+}
+
+static void on_beat_preset_changed(GuiState* gs) {
+    int sel = (int)SendMessageA(gs->hBeatCombo, CB_GETCURSEL, 0, 0);
+    if (sel <= 0) return;                 /* 0 = "-- Custom --" */
+    int count = 0;
+    const Preset* list = binaural_beat_list(&count);
+    if (sel - 1 >= count) return;
+    gs->beat_hz = list[sel - 1].hz;
+    char b[32]; snprintf(b, sizeof b, "%.3f", gs->beat_hz);
+    SetWindowTextA(gs->hBeatEdit, b);
     if (!gs->advanced) { recompute_lr_from_base_beat(gs); update_lr_display(gs); }
     push_params(gs);
 }
@@ -279,10 +321,10 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
     gs->inst = inst;
     gs->audio = audio;
     gs->custom_hz = 440.0;
-    gs->base_hz    = 100.0;
+    gs->base_hz    = 200.0;
     gs->beat_hz    = 7.83;
-    gs->left_hz    = 100.0;
-    gs->right_hz   = 107.83;
+    gs->left_hz    = 200.0;
+    gs->right_hz   = 207.83;
     gs->binaural   = 0;
     gs->advanced   = 0;
     gs->volume_pct = 50;
@@ -300,7 +342,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     gs->hwnd = CreateWindowA(WIN_CLASS, "Tone Generator", style,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 460, 530,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 460, 558,
                              NULL, NULL, inst, gs);
     if (!gs->hwnd) { free(gs); return NULL; }
     /* USERDATA is also installed inside WM_NCCREATE for any messages
@@ -330,7 +372,7 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
 
     /* Mode group */
     CreateWindowA("BUTTON", "Mode", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 95, 420, 160, gs->hwnd, NULL, inst, NULL);
+                  10, 95, 420, 188, gs->hwnd, NULL, inst, NULL);
 
     gs->hModeSingle = CreateWindowA("BUTTON", "Single tone",
                   WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | WS_GROUP,
@@ -358,109 +400,113 @@ GuiState* gui_create(HINSTANCE inst, AudioState* audio) {
     SendMessageA(gs->hNoiseTypeCombo, CB_ADDSTRING, 0, (LPARAM)"Brown");
     SendMessageA(gs->hNoiseTypeCombo, CB_SETCURSEL, 0, 0);
 
-    /* Binaural presets combo */
-    CreateWindowA("STATIC", "Binaural preset:", WS_CHILD | WS_VISIBLE,
-                  25, 142, 95, 18, gs->hwnd, NULL, inst, NULL);
-    gs->hBinauralCombo = CreateWindowA("COMBOBOX", NULL,
+    /* Binaural carrier preset */
+    CreateWindowA("STATIC", "Carrier:", WS_CHILD | WS_VISIBLE,
+                  25, 142, 60, 18, gs->hwnd, NULL, inst, NULL);
+    gs->hCarrierCombo = CreateWindowA("COMBOBOX", NULL,
                   WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL,
-                  125, 139, 285, 200, gs->hwnd,
-                  (HMENU)(LONG_PTR)ID_BINAURAL_COMBO, inst, NULL);
-    {
-        int bcount = 0;
-        const BinauralPreset* blist = binaural_presets_list(&bcount);
-        for (int i = 0; i < bcount; i++)
-            SendMessageA(gs->hBinauralCombo, CB_ADDSTRING, 0, (LPARAM)blist[i].name);
-    }
+                  90, 139, 320, 200, gs->hwnd,
+                  (HMENU)(LONG_PTR)ID_CARRIER_COMBO, inst, NULL);
+
+    /* Binaural beat preset */
+    CreateWindowA("STATIC", "Beat:", WS_CHILD | WS_VISIBLE,
+                  25, 170, 60, 18, gs->hwnd, NULL, inst, NULL);
+    gs->hBeatCombo = CreateWindowA("COMBOBOX", NULL,
+                  WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL,
+                  90, 167, 320, 200, gs->hwnd,
+                  (HMENU)(LONG_PTR)ID_BEAT_COMBO, inst, NULL);
 
     CreateWindowA("STATIC", "Base:", WS_CHILD | WS_VISIBLE,
-                  25, 170, 35, 18, gs->hwnd, NULL, inst, NULL);
-    gs->hBaseEdit = CreateWindowA("EDIT", "100.000",
+                  25, 198, 35, 18, gs->hwnd, NULL, inst, NULL);
+    gs->hBaseEdit = CreateWindowA("EDIT", "200.000",
                   WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                  65, 167, 80, 22, gs->hwnd,
+                  65, 195, 80, 22, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BASE_EDIT, inst, NULL);
     CreateWindowA("STATIC", "Hz   Beat:", WS_CHILD | WS_VISIBLE,
-                  150, 170, 70, 18, gs->hwnd, NULL, inst, NULL);
+                  150, 198, 70, 18, gs->hwnd, NULL, inst, NULL);
     gs->hBeatEdit = CreateWindowA("EDIT", "7.830",
                   WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                  225, 167, 80, 22, gs->hwnd,
+                  225, 195, 80, 22, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BEAT_EDIT, inst, NULL);
     CreateWindowA("STATIC", "Hz", WS_CHILD | WS_VISIBLE,
-                  310, 170, 25, 18, gs->hwnd, NULL, inst, NULL);
+                  310, 198, 25, 18, gs->hwnd, NULL, inst, NULL);
 
     gs->hAdvCheck = CreateWindowA("BUTTON", "Advanced (set L/R directly)",
                   WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-                  25, 195, 250, 20, gs->hwnd,
+                  25, 223, 250, 20, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_ADV_CHECK, inst, NULL);
 
     CreateWindowA("STATIC", "L:", WS_CHILD | WS_VISIBLE,
-                  25, 222, 15, 18, gs->hwnd, NULL, inst, NULL);
-    gs->hLeftEdit = CreateWindowA("EDIT", "100.000",
+                  25, 250, 15, 18, gs->hwnd, NULL, inst, NULL);
+    gs->hLeftEdit = CreateWindowA("EDIT", "200.000",
                   WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                  45, 219, 80, 22, gs->hwnd,
+                  45, 247, 80, 22, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_LEFT_EDIT, inst, NULL);
     CreateWindowA("STATIC", "Hz   R:", WS_CHILD | WS_VISIBLE,
-                  130, 222, 50, 18, gs->hwnd, NULL, inst, NULL);
-    gs->hRightEdit = CreateWindowA("EDIT", "107.830",
+                  130, 250, 50, 18, gs->hwnd, NULL, inst, NULL);
+    gs->hRightEdit = CreateWindowA("EDIT", "207.830",
                   WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                  185, 219, 80, 22, gs->hwnd,
+                  185, 247, 80, 22, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_RIGHT_EDIT, inst, NULL);
     CreateWindowA("STATIC", "Hz", WS_CHILD | WS_VISIBLE,
-                  270, 222, 25, 18, gs->hwnd, NULL, inst, NULL);
+                  270, 250, 25, 18, gs->hwnd, NULL, inst, NULL);
 
     /* Output group */
     CreateWindowA("BUTTON", "Output", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 265, 420, 122, gs->hwnd, NULL, inst, NULL);
+                  10, 293, 420, 122, gs->hwnd, NULL, inst, NULL);
 
     CreateWindowA("STATIC", "Volume:", WS_CHILD | WS_VISIBLE,
-                  25, 288, 50, 18, gs->hwnd, NULL, inst, NULL);
+                  25, 316, 50, 18, gs->hwnd, NULL, inst, NULL);
     gs->hVolumeTrack = CreateWindowA(TRACKBAR_CLASSA, NULL,
                   WS_CHILD | WS_VISIBLE | TBS_HORZ | TBS_NOTICKS,
-                  80, 285, 220, 24, gs->hwnd,
+                  80, 313, 220, 24, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_VOLUME_TRACK, inst, NULL);
     SendMessageA(gs->hVolumeTrack, TBM_SETRANGE, TRUE, MAKELONG(0, 100));
     SendMessageA(gs->hVolumeTrack, TBM_SETPOS,   TRUE, gs->volume_pct);
     gs->hVolumeLabel = CreateWindowA("STATIC", "50 %",
                   WS_CHILD | WS_VISIBLE,
-                  310, 288, 60, 18, gs->hwnd, NULL, inst, NULL);
+                  310, 316, 60, 18, gs->hwnd, NULL, inst, NULL);
 
     CreateWindowA("STATIC",
                   "High volume may damage hearing. Use at your own risk.",
                   WS_CHILD | WS_VISIBLE | SS_OWNERDRAW,
-                  25, 312, 400, 18, gs->hwnd, (HMENU)(LONG_PTR)9999, inst, NULL);
+                  25, 340, 400, 18, gs->hwnd, (HMENU)(LONG_PTR)9999, inst, NULL);
 
     gs->hPlayBtn = CreateWindowA("BUTTON", "Play",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  80, 333, 90, 26, gs->hwnd,
+                  80, 361, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_PLAY_BUTTON, inst, NULL);
     gs->hStopBtn = CreateWindowA("BUTTON", "Stop",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  185, 333, 90, 26, gs->hwnd,
+                  185, 361, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_STOP_BUTTON, inst, NULL);
 
     gs->hStatusLabel = CreateWindowA("STATIC", "Status: Idle",
                   WS_CHILD | WS_VISIBLE,
-                  25, 366, 400, 18, gs->hwnd, NULL, inst, NULL);
+                  25, 394, 400, 18, gs->hwnd, NULL, inst, NULL);
 
     /* 40Hz Brain Cleaner group */
     CreateWindowA("BUTTON", "40Hz Brain Cleaner",
                   WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-                  10, 393, 420, 85, gs->hwnd, NULL, inst, NULL);
+                  10, 421, 420, 85, gs->hwnd, NULL, inst, NULL);
 
     gs->hBrainStartBtn = CreateWindowA("BUTTON", "Start (60 min)",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  80, 416, 110, 26, gs->hwnd,
+                  80, 444, 110, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_START, inst, NULL);
     gs->hBrainStopBtn = CreateWindowA("BUTTON", "Stop",
                   WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                  205, 416, 90, 26, gs->hwnd,
+                  205, 444, 90, 26, gs->hwnd,
                   (HMENU)(LONG_PTR)ID_BRAIN_STOP, inst, NULL);
     gs->hBrainTimerLabel = CreateWindowA("STATIC", "60:00 session (MIT GENUS protocol)",
                   WS_CHILD | WS_VISIBLE,
-                  25, 450, 400, 18, gs->hwnd, NULL, inst, NULL);
+                  25, 478, 400, 18, gs->hwnd, NULL, inst, NULL);
 
     apply_enabled_states(gs);
 
     populate_presets(gs);
+    populate_binaural_combos(gs);
+    sync_binaural_combos(gs);
     push_params(gs);
     return gs;
 }
@@ -513,7 +559,8 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 case ID_MODE_BINAURAL:  if (code == BN_CLICKED)    on_mode_changed(gs, 1, 0); break;
                 case ID_MODE_NOISE:     if (code == BN_CLICKED)    on_mode_changed(gs, 0, 1); break;
                 case ID_NOISE_TYPE:     if (code == CBN_SELCHANGE) on_noise_type_changed(gs); break;
-                case ID_BINAURAL_COMBO: if (code == CBN_SELCHANGE) on_binaural_preset_changed(gs); break;
+                case ID_CARRIER_COMBO: if (code == CBN_SELCHANGE) on_carrier_preset_changed(gs); break;
+                case ID_BEAT_COMBO:    if (code == CBN_SELCHANGE) on_beat_preset_changed(gs); break;
                 case ID_ADV_CHECK:      if (code == BN_CLICKED)    on_advanced_toggled(gs); break;
                 case ID_PLAY_BUTTON:    if (code == BN_CLICKED) {
                     push_params(gs);
