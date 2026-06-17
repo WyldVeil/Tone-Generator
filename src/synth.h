@@ -33,10 +33,11 @@ typedef struct {
     double mod_hz;
 } SynthFrameParams;
 
-/* Fills `out` with `frames` stereo (L,R) interleaved int16 samples.
- * `out` must point to space for at least 2*frames int16_t values.
+/* Fills `out` with `frames` stereo (L,R) interleaved float samples in the
+ * normalized range [-1.0, 1.0] (the native format of the WASAPI shared mixer).
+ * `out` must point to space for at least 2*frames float values.
  * Updates `*phase` in place. Returns the final gain value reached. */
-double synth_fill_buffer(int16_t* out, size_t frames,
+double synth_fill_buffer(float* out, size_t frames,
                          SynthPhase* phase,
                          SynthFrameParams p);
 
@@ -58,7 +59,7 @@ typedef struct {
 
 void noise_state_init(NoiseState* ns);
 
-double synth_fill_noise(int16_t* out, size_t frames, NoiseState* ns,
+double synth_fill_noise(float* out, size_t frames, NoiseState* ns,
                         int noise_type, double volume,
                         double gain_start, double gain_target, double gain_step);
 

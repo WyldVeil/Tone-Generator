@@ -2,6 +2,8 @@
 
 A lightweight Windows tone generator that produces pure sine tones from first principles. No samples, no synth libraries -- every sound you hear is computed mathematically in real time. Built in C with the classic Win32 look.
 
+> **New in 1.1:** audio now plays out over **WASAPI** (shared mode) in **32-bit float** — the native format of the modern Windows mixer — instead of the legacy 16-bit `waveOut` path. The synthesis engine is unchanged; the signal just no longer round-trips through a 16-bit conversion, and the event-driven path tightens how quickly parameter changes become audible. `waveOut` remains as an automatic fallback. See **Audio Output** below.
+
 <p align="center">
   <img src="screenshot.JPG?v=3" alt="Tone Generator screenshot" width="400">
 </p>
@@ -249,10 +251,10 @@ The work comes from **Li-Huei Tsai's lab** at MIT's Picower Institute for Learni
 ## Technical Details
 
 - **Language:** C (C99)
-- **Audio:** Windows Multimedia API (`waveOut`) -- 44.1 kHz, 16-bit, stereo
-- **Synthesis:** Phase-accumulator sine generation, noise generators (white/pink/brown), 40 Hz pip train with trapezoidal envelope
+- **Audio:** WASAPI shared mode -- 44.1 kHz, 32-bit float, stereo, event-driven; automatic `waveOut` (16-bit) fallback if WASAPI init fails
+- **Synthesis:** Phase-accumulator sine generation, noise generators (white/pink/brown), 40 Hz pip train with trapezoidal envelope; all sample math in double precision, emitted as float
 - **GUI:** Pure Win32 API (no manifest -- classic gray-bevel look)
-- **Threading:** GUI thread + `waveOut` callback thread; `CRITICAL_SECTION`-guarded parameter passing
+- **Threading:** GUI thread + a dedicated WASAPI render thread (or `waveOut` callback thread in fallback); `CRITICAL_SECTION`-guarded parameter passing
 - **Tests:** 15 unit tests (10 synth, 5 preset) via `assert.h`
 
 ---

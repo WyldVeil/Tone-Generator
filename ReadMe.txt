@@ -1,10 +1,15 @@
-TONE GENERATOR
-==============
+TONE GENERATOR  (v1.1)
+======================
 
 A lightweight Windows tone generator that produces pure sine tones from
 first principles. No samples, no synth libraries -- every sound you hear
 is computed mathematically in real time. Built in C with the classic
 Win32 look.
+
+New in 1.1: audio now goes out over WASAPI (shared mode) in 32-bit float,
+the native format of the modern Windows mixer. The synthesis engine is
+unchanged -- same math, same presets -- but the signal path no longer
+round-trips through a 16-bit conversion. See AUDIO OUTPUT below.
 
 
 GETTING STARTED
@@ -153,6 +158,25 @@ below 20 Hz. You cannot hear them as a direct tone through speakers.
 Use them as binaural beats instead: set the frequency as the Beat value,
 pick a comfortable Base, and wear headphones. The status bar will warn
 you if you try to play a sub-audible frequency in Single mode.
+
+
+AUDIO OUTPUT
+------------
+
+The synth renders every sample in full double precision, then hands the
+buffer to Windows as 32-bit float through WASAPI in shared mode. Float is
+exactly what the Windows audio engine mixes in, so your tones reach the
+mixer without an intermediate 16-bit quantization step -- that is the
+"extra headroom" the 1.1 upgrade buys.
+
+WASAPI is also event-driven: the mixer wakes the render thread precisely
+when it needs the next chunk, which tightens how quickly a change you make
+(a new beat frequency, the 40 Hz pulse rate, the volume slider) becomes
+audible. The synthesis still runs at 44.1 kHz internally; the audio engine
+resamples to your device's mix rate as needed.
+
+If WASAPI cannot be initialized on your system, the program automatically
+falls back to the legacy waveOut path (16-bit), so playback always works.
 
 
 BUILDING FROM SOURCE

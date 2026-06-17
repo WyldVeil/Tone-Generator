@@ -16,7 +16,7 @@ double synth_next_gain(double current, double target, double step) {
     return current;
 }
 
-double synth_fill_buffer(int16_t* out, size_t frames,
+double synth_fill_buffer(float* out, size_t frames,
                          SynthPhase* phase,
                          SynthFrameParams p)
 {
@@ -69,8 +69,8 @@ double synth_fill_buffer(int16_t* out, size_t frames,
             while (pm >= TWO_PI) pm -= TWO_PI;
         }
 
-        out[2*i]     = (int16_t)(sl * 32767.0);
-        out[2*i + 1] = (int16_t)(sr * 32767.0);
+        out[2*i]     = (float)sl;
+        out[2*i + 1] = (float)sr;
 
         pl += inc_l;
         pr += inc_r;
@@ -141,7 +141,7 @@ void noise_state_init(NoiseState* ns) {
     ns->right.brown = 0.0;
 }
 
-double synth_fill_noise(int16_t* out, size_t frames, NoiseState* ns,
+double synth_fill_noise(float* out, size_t frames, NoiseState* ns,
                         int noise_type, double volume,
                         double gain_start, double gain_target, double gain_step)
 {
@@ -153,8 +153,8 @@ double synth_fill_noise(int16_t* out, size_t frames, NoiseState* ns,
         if (sl < -1.0) sl = -1.0;
         if (sr >  1.0) sr =  1.0;
         if (sr < -1.0) sr = -1.0;
-        out[2*i]     = (int16_t)(sl * 32767.0);
-        out[2*i + 1] = (int16_t)(sr * 32767.0);
+        out[2*i]     = (float)sl;
+        out[2*i + 1] = (float)sr;
         gain = synth_next_gain(gain, gain_target, gain_step);
     }
     return gain;

@@ -1,7 +1,7 @@
 CC      := gcc
 CFLAGS  := -O2 -Wall -Wextra -std=c99 -Isrc
 LDFLAGS := -mwindows
-LIBS    := -lwinmm -lgdi32 -luser32 -lcomctl32
+LIBS    := -lwinmm -lole32 -lgdi32 -luser32 -lcomctl32
 
 SRC := src/main.c src/audio.c src/synth.c src/gui.c src/presets.c
 OUT := ToneGen.exe
