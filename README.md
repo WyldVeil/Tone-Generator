@@ -1,5 +1,7 @@
 # Tone Generator
 
+[![Found it useful? Buy me a coffee](https://img.shields.io/badge/Found_it_useful%3F-Buy_me_a_coffee-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/wyldveil)
+
 A lightweight Windows tone generator that produces pure sine tones from first principles. No samples, no synth libraries -- every sound you hear is computed mathematically in real time. Built in C with the classic Win32 look.
 
 > **New in 1.1:** audio now plays out over **WASAPI** (shared mode) in **32-bit float** — the native format of the modern Windows mixer — instead of the legacy 16-bit `waveOut` path. The synthesis engine is unchanged; the signal just no longer round-trips through a 16-bit conversion, and the event-driven path tightens how quickly parameter changes become audible. `waveOut` remains as an automatic fallback. See **Audio Output** below.
